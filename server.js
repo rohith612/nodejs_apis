@@ -1,6 +1,50 @@
 const express = require('express')
 var app = express()
 
+
+const server = require('http').createServer(app);
+var io = require('socket.io')(server);
+
+
+
+// app.use(express.static(__dirname + '/bower_components'));
+
+app.get('/chat-room', function (req, res, next) {
+    res.sendFile(__dirname + '/index.html');
+});
+// io.use(verifyToken)
+
+io.on('connection', function (client) {
+
+    console.log(client.id);
+    var ipAddress = client.handshake.address;
+
+
+    client.on('disconnect', () => {
+        console.log(ipAddress + 'user disconnected');
+    });
+
+
+    client.on('join', function (data) {
+        if (data.token == 100000)
+            console.log(ipAddress + ' user connected...');
+        else
+            client.emit('failed', 'unable to connect the server');
+    });
+
+    client.on('messages', function (data) {
+        client.emit('broadMe', data);
+        client.broadcast.emit('broad', data);
+    });
+
+    client.on('typing', function (data) {
+        client.broadcast.emit('broadType', data);
+    });
+
+});
+
+
+
 const bodyParser = require('body-parser')
 const jwt = require('jsonwebtoken')
 
@@ -42,6 +86,7 @@ verifyToken = (req, res, next) => {
         if (err) {
             res.status(401).send({ error: "Invalid token" })
         } else {
+            req.decoded = decoded;
             next();
         }
     })
@@ -65,6 +110,7 @@ app.use(verifyToken, bookApi)
 /**
  * listen the server to the specific port for loading
  */
-app.listen(process.env.APP_PORT, () => {
+server.listen(process.env.APP_PORT, () => {
     console.log('server started')
 })
+

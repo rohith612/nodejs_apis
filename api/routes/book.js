@@ -86,4 +86,22 @@ router.get('/sample' , (req,res) => {
 })
 
 
+
+router.post('/get_user_name' , (req, res) => {
+    let user_name = req.decoded.name;
+    res.status(200).send({ displayName: user_name })
+})
+
+
+
+router.post('/get_user_info' , (req, res) => {
+    let userId = req.decoded.id;
+    let query = `SELECT * FROM users where id = ${userId}`;
+    con.query(query, (err, result, fields) => {
+        if (err || result.length == 0) res.status(204).send({ data: "can't get books" })
+        res.status(200).send({ data: result })
+    });
+})
+
+
 module.exports = router

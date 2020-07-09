@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+
+<head></head>
+<style>
+    #left {
+        width: 100px;
+        float: left;
+    }
+
+    #right {
+        width: 100px;
+        float: right;
+    }
+
+    .chat-room {
+        width: 400px;
+        height: auto;
+        border: black;
+        border-style: groove;
+    }
+</style>
+
+<body>
+    <h1>Hello World!</h1>
+    <div class="typing"></div>
+    <ul id="future" class="chat-room"></ul>
+    <form id="form" id="chat_form">
+        <input id="chat_input" type="text" onkeyup="isTyping()">
+        <input type="submit" value="Send">
+    </form>
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+</body>
+<script>
+    var socket = io.connect('http://localhost:5000');
+    var token = 100000;
+    socket.on('connect', function (data) {
+        socket.emit('join', { token: token });
+    });
+    // socket.on('messages', function (data) {
+    //     // console.log(data);
+    //     // alert(data);
+    // });
+
+    socket.on('failed', function (data) {
+        socket.close();
+        // alert(data)
+    });
+
+
+    socket.on('broad', function (data) {
+        $('#future').append(`<li id="left">${data}</li><li></li>`);
+    });
+
+    socket.on('broadMe', function (data) {
+        $('#future').append(`<li id="right">${data}</li><li></li>`);
+    });
+
+    socket.on('broadType', function (data) {
+        $('.typing').html(`<p><i>${data}</i></p>`);
+    });
+
+
+    function isTyping() {
+        let input = $('#chat_input').val();
+        if (input.length > 0)
+            socket.emit('typing', 'some one is typing');
+        else
+            socket.emit('typing', '');
+
+    }
+
+
+    $('form').submit(function (e) {
+        e.preventDefault();
+        var message = $('#chat_input').val();
+        socket.emit('messages', message);
+        $('#chat_input').val(null)
+        isTyping()
+    });
+
+</script>
+
+</html>
